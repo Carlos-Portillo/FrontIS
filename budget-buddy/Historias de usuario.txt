@@ -1,0 +1,194 @@
+﻿Iniciativa: BudgetBuddy - Historias de Usuario
+Épica 1: Sistema de Roles y Autenticación
+Descripción: Implementar autenticación con JWT y control de acceso por roles (USER / ADVISOR), garantizando registro para usuarios regulares, asesores pre-registrados en BD, inicio/cierre de sesión seguro y diferenciación de permisos en UI/API.
+HU1 – Registro como Usuario Regular
+Encargado: Paola Elizabeth Saracay Cruz
+Como nuevo usuario, quiero registrarme en la aplicación con rol Usuario, para poder gestionar mis finanzas personales.
+Criterios de aceptación:
+    • El registro público solicita nombre, correo, contraseña y confirmación; valida formato de correo, longitud mínima y coincidencia.
+    • El rol asignado en el backend es siempre USER (no se permite elegir ADVISOR por UI ni por request).
+    • Se persiste el usuario con rol USER en la base de datos.
+    • Tras iniciar sesión, solo ve funcionalidades de usuario regular.
+    • Mensajes claros de éxito/error y estados de carga.
+HU2 – Asesores pre-registrados (“quemados”) en la base de datos
+Encargado: Paola Elizabeth Saracay Cruz
+Como área administradora del sistema, quiero que los asesores estén pre-cargados en la base de datos, para controlar quién puede usar el rol ADVISOR sin registro público.
+Criterios de aceptación:
+    • No existe opción de registro como ADVISOR en la UI ni por API pública; cualquier intento de registrarse fuerza el rol USER.
+    • Los asesores existen desde el inicio en la BD con nombre, correo, rol=ADVISOR y contraseña hasheada.
+    • Solo correos pre-cargados pueden autenticarse como ADVISOR usando el login normal.
+    • La creación se realiza mediante script SQL / seed / migración y es idempotente (no duplica si se ejecuta más de una vez).
+    • La auditoría registra quién/cuándo ejecutó la carga inicial (por CLI o control interno).
+HU3 – Diferenciación de Permisos por Rol (UI + API)
+Encargado: Paola Elizabeth Saracay Cruz
+Como usuario del sistema, quiero que la interfaz y permisos se ajusten a mi rol, para acceder solo a lo que me corresponde.
+Criterios de aceptación:
+    • USER solo ve gestión personal; ADVISOR ve además opciones de asesoría.
+    • Menú/navegación muestra/oculta opciones según rol e incluye indicador del rol.
+    • Guardas de ruta (frontend) y middleware (backend) bloquean accesos por URL (401/403 consistentes).
+    • Tras login/logout, la UI se actualiza y los permisos se recalculan sin inconsistencias.
+    • Persistencia del contexto de rol visible según política de seguridad.
+HU4 – Inicio de Sesión con JWT, Renovación y Cierre de Sesión Seguro
+Encargado: Paola Elizabeth Saracay Cruz
+Como usuario del sistema, quiero iniciar sesión con JWT, mantener sesión con refresh token y poder cerrar sesión, para usar la app de forma segura sin reingresar credenciales frecuentemente.
+Criterios de aceptación:
+    • Login: correo/contraseña, validaciones, estados de carga y errores claros.
+    • Tokens: la API emite accessToken (corto) y refreshToken (extendido) con claims de usuario y rol.
+    • Autorización: el frontend envía Authorization: Bearer <accessToken>; el refresh solo se usa para obtener nuevo accessToken.
+    • Renovación: /auth/refresh devuelve accessToken nuevo con refresh válido; inválido/expirado → 401.
+    • Logout: /auth/logout invalida/rota el refresh y el frontend elimina credenciales.
+    • Seguridad/UX: rate-limit de login, manejo seguro de tokens (httpOnly/sameSite si cookie o memoria), aviso de sesión expirada y reintento de refresh.
+Épica 2: Exportación de Reportes
+Descripción: Implementar funcionalidades de exportación de reportes para permitir a los usuarios descargar los datos financieros en formatos estándar (Excel y PDF) con el fin de facilitar su compartición, presentación y archivo fuera de la aplicación.
+HU1 – Exportar Reporte a Excel
+Encargado: Carlos César Portillo Mendoza
+Como usuario quiero exportar mis reportes financieros a Excel con formato legible para poder compartirlos y presentarlos de manera clara y organizada.
+Criterios de aceptación:
+    • Existe un botón "Exportar a Excel" claramente visible en la página de reportes.
+    • El archivo de Excel incluye encabezados con estilos.
+    • Las celdas tienen bordes y formato apropiado.
+    • Los números están formateados como moneda.
+    • El nombre de archivo incluye la fecha de generación.
+    • La exportación funciona en diferentes navegadores.
+HU2 – Exportar Reporte a PDF
+Encargado: Carlos César Portillo Mendoza
+Como usuario quiero exportar mis reportes a formato PDF para tener una versión lista para imprimir o enviar por email.
+Criterios de aceptación:
+    • Existe un botón "Exportar PDF” en la página de reportes.
+    • El PDF generado mantiene el formato y diseño visual del reporte.
+    • Incluye todos los datos visibles en pantalla.
+    • El PDF es visible y tiene buena calidad.
+    • El archivo se descarga automáticamente con nombre descriptivo.
+    • La exportación funciona en diferentes navegadores.
+Épica 3: Página de Perfil de Usuario
+Descripción: Optimizar la página de perfil del usuario para mostrar información más completa y permitir la edición de sus datos personales de manera interactiva con el fin de mejorar la experiencia del usuario al brindar mayor personalización dentro de la aplicación.
+HU1 – Visualización Ampliada del Perfil
+Encargada: María Auxiliadora Martínez Ávila
+Como usuario registrado, quiero visualizar mi información personal completa, con mi nombre, correo, rol y biografía, para tener un acceso claro y personalizado a mis datos dentro de la aplicación.
+Criterios de aceptación:
+    • Se muestra el nombre, correo, rol del usuario y una sección de biografía.
+    • La información se obtiene de los datos guardados en localStorage o del backend.
+    • Los datos se presentan con un diseño agradable y responsive.
+    • Se muestra el rol actual del usuario (USER o ADVISOR).
+HU2 – Edición de Información Personal
+Encargada: María Auxiliadora Martínez Ávila
+Como usuario registrado, quiero poder editar mi información personal desde mi perfil, para mantener mis datos actualizados.
+Criterios de aceptación:
+    • Se muestra un botón o ícono de edición junto a cada campo editable.
+    • Al hacer clic en “Editar”, se abre un modal o formulario con los campos modificables.
+    • Se validan en el sistema los campos antes de guardar.
+    • Al guardar, se muestran mensajes de éxito o error según el resultado.
+    • Se reflejan los cambios inmediatamente en la vista del perfil.
+Épica 4: Panel de Estadísticas y Dashboard
+Descripción: Mejorar la visualización y comprensión de la información financiera del usuario mediante la implementación de gráficos y métricas interactivas, permitiendo analizar tendencias de gasto, utilizando los datos provenientes de las transacciones registradas en el sistema.
+HU1 – Ver Gráfico de Tendencia de Gastos
+Encargada: Marisol Abigail Miranda Flores
+Como usuario quiero ver un gráfico de tendencia de mis gastos de los últimos 6 meses para identificar patrones en mi comportamiento financiero.
+Criterios de aceptación:
+    • El dashboard muestra un gráfico de línea con los gastos mensuales.
+    • El gráfico incluye los últimos seis meses.
+    • Los datos se calculan automáticamente a partir de las transacciones registradas.
+    • El gráfico es interactivo (al pasar el cursor muestra los valores exactos).
+    • Se actualiza automáticamente al agregar nuevas transacciones.
+    • Si no existen datos suficientes, se muestra el mensaje “No hay información disponible”.
+HU2 – Ver Distribución de Gastos por Categoría
+Encargada: Marisol Abigail Miranda Flores
+Como usuario quiero ver un gráfico circular que muestre la distribución de mis gastos por categoría para entender en qué áreas gasto más dinero.
+Criterios de aceptación:
+    • El dashboard muestra un gráfico circular (pie chart) con las categorías de gasto.
+    • Cada categoría tiene un color distintivo.
+    • Se muestra el porcentaje y monto total de cada categoría.
+    • Solo se incluyen las categorías con gastos en el período seleccionado.
+    • Al pasar el cursor sobre una categoría, se muestran detalles del gasto.
+    • El gráfico se actualiza automáticamente cuando cambian las transacciones.
+HU3 – Ver Indicadores de Gasto Promedio
+Encargada: Marisol Abigail Miranda Flores
+Como usuario quiero visualizar mi gasto promedio diario y semanal para conocer mis hábitos financieros y mejorar mi control del presupuesto.
+Criterios de aceptación:
+    • El dashboard muestra indicadores con el gasto promedio diario y semanal.
+    • Los cálculos se basan en las transacciones existentes.
+    • Los indicadores se actualizan al agregar o eliminar transacciones.
+    • Los datos se muestran con formato de moneda.
+    • Si no hay datos suficientes, se muestra “Sin datos disponibles”.
+Épica 5: Filtros Avanzados y Búsqueda en Transacciones
+Descripción: Permitir a los usuarios filtrar, buscar y ordenar transacciones financieras de manera eficiente mediante múltiples criterios simultáneos, con resultados en tiempo real y persistencia de preferencias.
+HU1 – Filtro por rango de fechas con calendario
+Encargado: Elmer Josué Gálvez Vásquez
+Como usuario, quiero seleccionar un rango de fechas mediante un calendario visual para filtrar transacciones dentro de ese período.
+Criterios de aceptación:
+    • El calendario permite seleccionar fecha de inicio y fin.
+    • El filtro se aplica inmediatamente después de seleccionar el rango.
+    • Las transacciones fuera del rango no se muestran.
+HU2 – Filtro por rango de montos
+Encargado: Elmer Josué Gálvez Vásquez
+Como usuario, quiero filtrar transacciones por un rango de montos (desde/hasta) para encontrar operaciones dentro de un importe específico.
+Criterios de aceptación:
+    • Campos numéricos para monto mínimo y máximo.
+    • Validación para evitar montos negativos o inconsistentes.
+    • Resultados actualizados en tiempo real.
+HU3 – Filtro por múltiples categorías
+Encargado: Elmer Josué Gálvez Vásquez
+Como usuario, quiero seleccionar varias categorías a la vez para filtrar transacciones que pertenezcan a cualquiera de ellas.
+Criterios de aceptación:
+    • Lista de categorías con casillas de selección múltiple.
+    • Al seleccionar varias, se muestran las transacciones que coincidan con al menos una.
+    • Posibilidad de seleccionar todas.
+HU4 – Búsqueda por descripción con autocompletado
+Encargado: Elmer Josué Gálvez Vásquez
+Como usuario, quiero buscar transacciones por descripción usando texto libre, con sugerencias en tiempo real.
+Criterios de aceptación:
+    • Campo de búsqueda con autocompletado.
+    • Resultados que coincidan parcial o totalmente con la descripción.
+    • Búsqueda en tiempo real mientras se escribe.
+Sin e
+HU5 – Resaltado de resultados de búsqueda
+Encargado: Elmer Josué Gálvez Vásquez
+Como usuario, quiero que los términos buscados se resalten en los resultados para identificarlos rápidamente.
+Criterios de aceptación:
+    • Texto coincidente resaltado en los resultados.
+    • Resaltado aplicado tanto en descripción como en otros campos visibles.
+    • Estilo de resaltado claro y distinguible.
+HU6 – Ordenamiento flexible de transacciones
+Encargado: Elmer Josué Gálvez Vásquez
+Como usuario, quiero ordenar las transacciones por fecha, monto, categoría o tipo, en orden ascendente o descendente.
+Criterios de aceptación:
+    • Selector de campo para ordenar (fecha, monto, categoría, tipo).
+    • Botón o selector para alternar entre ascendente/descendente.
+    • Resultados reordenados inmediatamente.
+Épica 6: Panel de asesoría financiera mejorado
+Descripción: Implementar una mejora en el dashboard del asesor donde pueda monitorear sus actividades.
+HU1 - Ver métricas del asesor
+Encargado: Karen Elizabeth Rodas Escobar
+Como asesor financiero del sistema, quiero ver un resumen con el número total de asesorías realizadas, para llevar control de mi actividad y desempeño.
+Criterios de aceptación:
+    • El sistema debe muestra número total de asesorías realizadas.
+    • El asesor debe poder ver métricas adicionales como promedio de asesorías por mes.
+    • Las métricas deben actualizarse automáticamente al registrar nuevas asesorías.
+HU2 - Listar usuarios con transacciones públicas
+Encargado: Karen Elizabeth Rodas Escobar
+Como asesor financiero, quiero visualizar una lista de usuarios con transacciones públicas, para identificar a quién puedo brindar asesoría.
+Criterios de aceptación:
+    • El sistema debe mostrar una lista con los nombres de los usuarios que tengan transacciones públicas.
+    • Cada usuario debe incluir un enlace o botón para ver sus transacciones públicas.
+    • Si ningún usuario tiene transacciones públicas, se mostrará un mensaje informativo.
+HU3 - Filtrar asesorías
+Encargado: Karen Elizabeth Rodas Escobar
+Como asesor financiero, quiero filtrar mis asesorías por fecha o usuario, para consultar rápidamente casos específicos.
+Criterios de aceptación:
+    • Debe existir un filtro de rango de fechas y un campo de búsqueda por nombre de usuario.
+    • Los filtros deben poder combinarse.
+    • Los resultados filtrados deben actualizarse dinámicamente sin recargar la página.
+H4 - Categorizar asesorías
+Encargado: Karen Elizabeth Rodas Escobar
+Como asesor financiero, quiero clasificar las asesorías por tipo (ahorro, inversión, reducción de gastos, etc.), para mantener un registro ordenado de las recomendaciones brindadas.
+Criterios de aceptación:
+    • Al registrar una asesoría, el sistema debe permitir seleccionar una categoría.
+    • Las categorías deben mostrarse en los reportes e historial.
+    • El asesor debe poder editar la categoría después de creada la asesoría.
+HU5 - Mejoras de usabilidad en el panel de asesoría
+Encargado: Karen Elizabeth Rodas Escobar
+Como asesor financiero, quiero que el panel de asesoría sea responsivo, para facilitar mi trabajo y mejorar la experiencia de uso.
+Criterios de aceptación:
+    • El panel debe adaptarse a diferentes resoluciones de pantalla (PC, móvil).
+    • Deben mostrarse tooltips explicativos en botones y gráficos.
+    • Las cargas de datos deben mostrar indicadores visuales (“loading”).
